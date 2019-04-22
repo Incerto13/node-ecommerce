@@ -10,12 +10,12 @@ const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
 
-const errorController = require('./controllers/error');
-const shopController = require('./controllers/shop');
-const isAuth = require('./middleware/is-auth');
-const User = require('./models/user');
+const errorController = require('./src/controllers/error');
+const shopController = require('./src/controllers/shop');
+const isAuth = require('./src/middleware/is-auth');
+const User = require('./src/models/user');
 
-const MONGODB_URI = 'mongodb://localhost/ecommerce';
+const MONGODB_URI = 'mongodb://localhost/nodeEcommerce';
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -47,11 +47,11 @@ const fileFilter = (req, file, cb) => {
 };
 
 app.set('view engine', 'ejs');
-app.set('views', 'views');
+app.set('views', './src/views');
 
-const adminRoutes = require('./routes/admin');
-const shopRoutes = require('./routes/shop');
-const authRoutes = require('./routes/auth');
+const adminRoutes = require('./src/routes/admin');
+const shopRoutes = require('./src/routes/shop');
+const authRoutes = require('./src/routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(multer({ storage: fileStorage, fileFilter }).single('image'));
