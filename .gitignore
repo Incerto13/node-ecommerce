@@ -1,4 +1,4 @@
 node_modules
 app-env
 data
-export_script
+mongo-seed/export_script
