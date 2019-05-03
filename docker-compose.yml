@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+
+  app:
+    build: ./web
+    restart: unless-stopped
+    ports:
+      - "8006:3000" # localhost:container(needs to match port express is listening on in the app and from dockerfile)
+    links:
+      - db
+
+  db:
+    # container name needs to match mongoose.connect('mongodb://db:27017/nodeSalesLeads')
+    image: mongo
+    restart: unless-stopped
+    volumes:
+      - ./mongo/data:/data/db # need to delete 'mongo/data' directory to re-seed w/ new data
+    ports:
+      - "19091:27017"  # local machine already using 27017 (for mongodb) 
+
+  db-seed:
+    build: ./mongo-seed
+    links:
+      - db
+
+
+      

@@ -15,12 +15,18 @@ const shopController = require('./src/controllers/shop');
 const isAuth = require('./src/middleware/is-auth');
 const User = require('./src/models/user');
 
-const MONGODB_URI = 'mongodb://localhost/nodeEcommerce';
+// dev = 'localhost', prod/container = 'db'
+let MONGODB_URL;
+if (process.env.NODE_ENV == 'production') {
+  MONGODB_URL = 'mongodb://db:27017/nodeEcommerce';
+} else {
+  MONGODB_URL = 'mongodb://localhost:27017/nodeEcommerce';
+}
 
 const port = process.env.PORT || 3000;
 const app = express();
 const store = new MongoDBStore({
-  uri: MONGODB_URI,
+  uri: MONGODB_URL,
   collection: 'sessions'
 });
 const csrfProtection = csrf();
@@ -122,7 +128,7 @@ app.use((error, req, res, next) => {
 });
 
 const db = mongoose
-  .connect(MONGODB_URI, {
+  .connect(MONGODB_URL, {
     useCreateIndex: true,
     useNewUrlParser: true
   })
