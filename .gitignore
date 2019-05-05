@@ -1,5 +1,6 @@
 node_modules
 app-env
+app.env
 data
 mongo-seed/export_script.sh
 
