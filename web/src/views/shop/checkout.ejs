@@ -20,7 +20,7 @@
                     <form action="/create-order" method="POST">
                       <script
                         src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                        data-key="pk_test_fOrkBcn498Bm8BHHPLUummKJ00a5PgMi4S"
+                        data-key="<%= stripePublishableKey %>"
                         data-amount="<%= totalSum * 100 %>"
                         data-name="Your Order"
                         data-description="All the items you ordered"

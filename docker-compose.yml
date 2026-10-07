@@ -13,10 +13,10 @@ services:
 
   db:
     # container name needs to match mongoose.connect('mongodb://db:27017/nodeSalesLeads')
-    image: mongo
+    image: mongo:8.0   # pinned; was "mongo" (latest)
     restart: unless-stopped
     volumes:
-      - ./mongo/data:/data/db # need to delete 'mongo/data' directory to re-seed w/ new data
+      - mongodata:/data/db  # Docker-managed volume; `docker compose down -v` to wipe and re-seed
     ports:
       - "19091:27017"  # local machine already using 27017 (for mongodb) 
 
@@ -25,5 +25,5 @@ services:
     links:
       - db
 
-
-      
+volumes:
+  mongodata:

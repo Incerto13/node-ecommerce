@@ -1,6 +1,1 @@
-.login-form {
-  width: 20rem;
-  max-width: 90%;
-  margin: auto;
-  display: block;
-}
+/* Auth forms share .login-form styles in forms.css. */

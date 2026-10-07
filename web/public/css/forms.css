@@ -1,28 +1,86 @@
-.form-control {
-  margin: 1rem 0;
+.form-control { margin: 0 0 1.1rem; }
+
+.form-control label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-2);
 }
 
-.form-control label,
 .form-control input,
 .form-control textarea {
   display: block;
   width: 100%;
-  margin-bottom: 0.25rem;
-}
-
-.form-control input,
-.form-control textarea {
-  border: 1px solid #a1a1a1;
+  padding: 0.75rem 0.9rem;
   font: inherit;
-  border-radius: 2px;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
+.form-control textarea { resize: vertical; min-height: 7rem; }
+
+.form-control input:hover,
+.form-control textarea:hover { border-color: #cfccc4; }
 
 .form-control input:focus,
 .form-control textarea:focus {
-  outline-color: #00695c;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .form-control input.invalid,
 .form-control textarea.invalid {
-  border-color: red;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px #fdecec;
 }
+
+.form-control input[type="file"] {
+  padding: 0.6rem;
+  background: var(--tile);
+  border-style: dashed;
+  cursor: pointer;
+}
+.form-control input[type="file"]::file-selector-button {
+  margin-right: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* Forms are cards; their submit button spans the width. */
+.login-form,
+.product-form {
+  display: block;
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.product-form { max-width: 32rem; }
+.login-form > .btn,
+.product-form > .btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1.2rem;
+  font-size: 0.95rem;
+}
+
+.form-footer {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+.form-footer a { color: var(--accent); font-weight: 600; }

@@ -1,19 +1,13 @@
 const crypto = require('crypto');
 
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
-const sendgridTransport = require('nodemailer-sendgrid-transport');
 const { validationResult } = require('express-validator/check');
 
-const api_key = process.env.sendGrid_API_KEY;
-
 const User = require('../models/user');
+const mailer = require('../util/mailer');
 
-const transporter = nodemailer.createTransport(sendgridTransport({
-  auth: {
-    api_key
-  }
-}));
+// Public base URL for links in emails (reset password).
+const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash('error');
@@ -150,13 +144,12 @@ exports.postSignup = (req, res, next) => {
       });
       return user.save();
     })
-    .then((result) => {
+    .then(() => {
       res.redirect('/login');
-      return transporter.sendMail({
+      mailer.send({
         to: email,
-        from: 'node-ecommerce@incertotech.com',
         subject: 'Signup succeeded',
-        html: '<h1>You successfuly signed up!</h1>'
+        html: '<h1>You successfully signed up!</h1>'
       });
     })
     .catch((err) => {
@@ -201,18 +194,18 @@ exports.postReset = (req, res, next) => {
         return user.save();
       })
       .then((result) => {
+        if (!result) return; // no such user: already redirected to /reset above
         res.redirect('/');
-        transporter.sendMail({
+        mailer.send({
           to: req.body.email,
-          from: 'node-ecommerce@incertotech.com',
           subject: 'Password reset',
           html: `
-            <p>You requiested a password reset<p>
-            <p>Click this <a href="http://localhost:3000/reset/${token}">link</a> to set a new password.</p>
+            <p>You requested a password reset.</p>
+            <p>Click this <a href="${APP_URL}/reset/${token}">link</a> to set a new password.</p>
           `,
         });
       })
-      .catch(() => {
+      .catch((err) => {
         const error = new Error(err);
         error.httpStatusCode = 500;
         return next(error);

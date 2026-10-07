@@ -15,13 +15,18 @@ const shopController = require('./src/controllers/shop');
 const isAuth = require('./src/middleware/is-auth');
 const User = require('./src/models/user');
 
-// dev = 'localhost', prod/container = 'db'
-let MONGODB_URL;
-if (process.env.NODE_ENV == 'production') {
-  MONGODB_URL = 'mongodb://db:27017/nodeEcommerce';
-} else {
-  MONGODB_URL = 'mongodb://localhost:27017/nodeEcommerce';
-}
+// MONGODB_URL overrides everything (k8s: mongo runs in the same pod -> localhost).
+// Otherwise: docker-compose prod = service 'db', local dev = localhost.
+const MONGODB_URL = process.env.MONGODB_URL
+  || (process.env.NODE_ENV === 'production'
+    ? 'mongodb://db:27017/nodeEcommerce'
+    : 'mongodb://localhost:27017/nodeEcommerce');
+
+// Safety net: log instead of dying. Node >= 15 terminates the process on an
+// unhandled rejection; one bad Stripe call used to take the whole demo down.
+process.on('unhandledRejection', (reason) => {
+  console.log('[unhandledRejection]', reason);
+});
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -64,10 +69,9 @@ app.use(multer({ storage: fileStorage, fileFilter }).single('image'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// secret should be a long string in production
 app.use(
   session({
-    secret: 'my secret',
+    secret: process.env.SESSION_SECRET || 'dev-only-session-secret',
     resave: false,
     saveUninitialized: false,
     store,
@@ -118,9 +122,11 @@ app.use(errorController.get404); // catch-all middleware
 
 // global error-handler
 app.use((error, req, res, next) => {
-  // res.redirect('/500');
   console.log(error);
-  res.status(500).render('500', {
+  if (res.headersSent) {
+    return next(error);
+  }
+  return res.status(500).render('500', {
     pageTitle: 'Error!',
     path: '/500',
     isAuthenticated: req.session.isLoggedIn
@@ -138,5 +144,7 @@ const db = mongoose
     });
   })
   .catch((err) => {
-    console.log(err);
+    // Without a database there is nothing to serve; exit so the orchestrator restarts us.
+    console.log('[startup] could not connect to MongoDB:', err.message);
+    process.exit(1);
   });

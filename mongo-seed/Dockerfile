@@ -1,4 +1,4 @@
-FROM mongo
+FROM mongo:8.0
 
 COPY orders_init.json products_init.json users_init.json ./
 #  mongoimport --host <host_name> --username <user_name> --password <password> --db <database_name> --collection <collection_name> --file <input_file>

@@ -7,6 +7,8 @@
    <%- include('../includes/navigation.ejs') %>
 
     <main>
+        <h1 class="page-title">Welcome back</h1>
+        <p class="page-subtitle">Log in to shop and check out.</p>
         <% if (errorMessage) { %>
             <div class="user-message user-message--error"><%= errorMessage %></div>
         <% } %>
@@ -32,8 +34,8 @@
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button class="btn" type="submit">Login</button>
         </form>
-        <div class="centered">
-            <a href="/reset">Reset Password</a>
+        <div class="form-footer">
+            <a href="/reset">Forgot your password?</a> &middot; New here? <a href="/signup">Create an account</a>
         </div>
     </main>
 <%- include('../includes/end.ejs') %>

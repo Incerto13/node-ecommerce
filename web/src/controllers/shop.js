@@ -2,13 +2,15 @@ const fs = require('fs');
 const path = require('path');
 
 const PDFDocument = require('pdfkit');
-const stripe_API_KEY = process.env.stripe_API_KEY;
-var stripe = require("stripe")(stripe_API_KEY);
+// Stripe test-mode keys come from the environment (app.env / k8s Secret).
+const STRIPE_SECRET_KEY = process.env.stripe_API_KEY;
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+const stripe = require('stripe')(STRIPE_SECRET_KEY);
 
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-const ITEMS_PER_PAGE = 2;
+const ITEMS_PER_PAGE = 6;
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -152,6 +154,7 @@ exports.getCheckout = (req, res, next) => {
         pageTitle: 'Checkout',
         products,
         totalSum: total,
+        stripePublishableKey: STRIPE_PUBLISHABLE_KEY,
       });
     })
     .catch((err) => {
@@ -162,13 +165,10 @@ exports.getCheckout = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
-  // Set your secret key: remember to change this to your live secret key in production
-  // See your keys here: https://dashboard.stripe.com/account/apikeys
-
-  // Token is created using Checkout or Elements!
-  // Get the payment token ID submitted by the form:
-  const token = req.body.stripeToken; // Using Express
+  // Payment token created by Stripe Checkout on the checkout page.
+  const token = req.body.stripeToken;
   let totalSum = 0;
+  let products;
 
   req.user
     .populate('cart.items.productId')
@@ -177,36 +177,34 @@ exports.postOrder = (req, res, next) => {
       user.cart.items.forEach((p) => {
         totalSum += p.quantity * p.productId.price;
       });
-
-      const products = user.cart.items.map((i) => {
-        return { quantity: i.quantity, product: { ...i.productId._doc } };
+      products = user.cart.items.map((i) => ({ quantity: i.quantity, product: { ...i.productId._doc } }));
+      if (!STRIPE_SECRET_KEY) {
+        throw new Error('Payments are not configured (stripe_API_KEY is not set).');
+      }
+      // Charge FIRST and await it. This used to be a fire-and-forget async call:
+      // any Stripe error became an unhandled rejection and killed the process.
+      return stripe.charges.create({
+        amount: Math.round(totalSum * 100),
+        currency: 'usd',
+        description: 'Demo Order',
+        source: token,
       });
+    })
+    .then((charge) => {
       const order = new Order({
-        user: {
-          email: req.user.email,
-          userId: req.user,
-        },
+        user: { email: req.user.email, userId: req.user },
         products,
       });
-      return order.save();
+      return order.save().then((saved) => stripe.charges
+        .update(charge.id, { metadata: { order_id: saved._id.toString() } })
+        .catch(() => {}) // metadata is nice-to-have only
+        .then(() => saved));
     })
-    .then((result) => {
-      (async () => {
-        const charge = await stripe.charges.create({
-          amount: totalSum * 100,
-          currency: 'usd',
-          description: 'Demo Order',
-          source: token,
-          metadata: { order_id: result._id.toString() }
-        });
-      })();
-      req.user.clearCart();
-    })
-    .then(() => {
-      res.redirect('/orders');
-    })
+    .then(() => req.user.clearCart())
+    .then(() => res.redirect('/orders'))
     .catch((err) => {
-      const error = new Error(err);
+      console.log(`[checkout] ${err.type || 'Error'}: ${err.message}`);
+      const error = new Error(err.message);
       error.httpStatusCode = 500;
       return next(error);
     });
